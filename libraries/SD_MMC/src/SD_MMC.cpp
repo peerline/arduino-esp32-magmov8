@@ -27,7 +27,6 @@
 
 using namespace fs;
 
-
 SDMMCFS::SDMMCFS(FSImplPtr impl)
     : FS(impl), _card(nullptr)
 {
@@ -50,31 +49,33 @@ bool SDMMCFS::setPins(int clk, int cmd, int d0)
 
 bool SDMMCFS::setPins(int clk, int cmd, int d0, int d1, int d2, int d3)
 {
-    if (_card != nullptr) {
+    if (_card != nullptr)
+    {
         log_e("SD_MMC.setPins must be called before SD_MMC.begin");
         return false;
     }
 #ifdef SOC_SDMMC_USE_GPIO_MATRIX
     // SoC supports SDMMC pin configuration via GPIO matrix. Save the pins for later use in SDMMCFS::begin.
-    _pin_clk = (int8_t) clk;
-    _pin_cmd = (int8_t) cmd;
-    _pin_d0 = (int8_t) d0;
-    _pin_d1 = (int8_t) d1;
-    _pin_d2 = (int8_t) d2;
-    _pin_d3 = (int8_t) d3;
+    _pin_clk = (int8_t)clk;
+    _pin_cmd = (int8_t)cmd;
+    _pin_d0 = (int8_t)d0;
+    _pin_d1 = (int8_t)d1;
+    _pin_d2 = (int8_t)d2;
+    _pin_d3 = (int8_t)d3;
     return true;
 #elif CONFIG_IDF_TARGET_ESP32
     // ESP32 doesn't support SDMMC pin configuration via GPIO matrix.
     // Since SDMMCFS::begin hardcodes the usage of slot 1, only check if
     // the pins match slot 1 pins.
     bool pins_ok = (clk == (int)SDMMC_SLOT1_IOMUX_PIN_NUM_CLK) &&
-        (cmd == (int)SDMMC_SLOT1_IOMUX_PIN_NUM_CMD) &&
-        (d0 == (int)SDMMC_SLOT1_IOMUX_PIN_NUM_D0) &&
-        (((d1 == -1) && (d2 == -1) && (d3 == -1)) ||
-         ((d1 == (int)SDMMC_SLOT1_IOMUX_PIN_NUM_D1) &&
-         (d2 == (int)SDMMC_SLOT1_IOMUX_PIN_NUM_D2) &&
-         (d3 == (int)SDMMC_SLOT1_IOMUX_PIN_NUM_D3)));
-    if (!pins_ok) {
+                   (cmd == (int)SDMMC_SLOT1_IOMUX_PIN_NUM_CMD) &&
+                   (d0 == (int)SDMMC_SLOT1_IOMUX_PIN_NUM_D0) &&
+                   (((d1 == -1) && (d2 == -1) && (d3 == -1)) ||
+                    ((d1 == (int)SDMMC_SLOT1_IOMUX_PIN_NUM_D1) &&
+                     (d2 == (int)SDMMC_SLOT1_IOMUX_PIN_NUM_D2) &&
+                     (d3 == (int)SDMMC_SLOT1_IOMUX_PIN_NUM_D3)));
+    if (!pins_ok)
+    {
         log_e("SDMMCFS: specified pins are not supported by this chip.");
         return false;
     }
@@ -84,57 +85,65 @@ bool SDMMCFS::setPins(int clk, int cmd, int d0, int d1, int d2, int d3)
 #endif
 }
 
-bool SDMMCFS::begin(const char * mountpoint, bool mode1bit, bool format_if_mount_failed, int sdmmc_frequency, uint8_t maxOpenFiles)
+bool SDMMCFS::begin(const char *mountpoint, bool mode1bit, bool format_if_mount_failed, int sdmmc_frequency, uint8_t maxOpenFiles)
 {
-    if(_card) {
+    if (_card)
+    {
         return true;
     }
-    //mount
+    // mount
     sdmmc_slot_config_t slot_config = SDMMC_SLOT_CONFIG_DEFAULT();
 #ifdef SOC_SDMMC_USE_GPIO_MATRIX
     // SoC supports SDMMC pin configuration via GPIO matrix.
     // Chech that the pins have been set either in the constructor or setPins function.
-    if (_pin_cmd == -1 || _pin_clk == -1 || _pin_d0 == -1
-        || (!mode1bit && (_pin_d1 == -1 || _pin_d2 == -1 || _pin_d3 == -1))) {
+    if (_pin_cmd == -1 || _pin_clk == -1 || _pin_d0 == -1 || (!mode1bit && (_pin_d1 == -1 || _pin_d2 == -1 || _pin_d3 == -1)))
+    {
         log_e("SDMMCFS: some SD pins are not set");
         return false;
     }
 
-    slot_config.clk = (gpio_num_t) _pin_clk;
-    slot_config.cmd = (gpio_num_t) _pin_cmd;
-    slot_config.d0 = (gpio_num_t) _pin_d0;
-    slot_config.d1 = (gpio_num_t) _pin_d1;
-    slot_config.d2 = (gpio_num_t) _pin_d2;
-    slot_config.d3 = (gpio_num_t) _pin_d3;
+    slot_config.clk = (gpio_num_t)_pin_clk;
+    slot_config.cmd = (gpio_num_t)_pin_cmd;
+    slot_config.d0 = (gpio_num_t)_pin_d0;
+    slot_config.d1 = (gpio_num_t)_pin_d1;
+    slot_config.d2 = (gpio_num_t)_pin_d2;
+    slot_config.d3 = (gpio_num_t)_pin_d3;
     slot_config.width = 4;
 #endif // SOC_SDMMC_USE_GPIO_MATRIX
     sdmmc_host_t host = SDMMC_HOST_DEFAULT();
     host.flags = SDMMC_HOST_FLAG_4BIT;
+    // host.flags &= ~SDMMC_HOST_FLAG_DDR;
     host.slot = SDMMC_HOST_SLOT_1;
     host.max_freq_khz = sdmmc_frequency;
 #ifdef BOARD_HAS_1BIT_SDMMC
     mode1bit = true;
 #endif
-    if(mode1bit) {
-        host.flags = SDMMC_HOST_FLAG_1BIT; //use 1-line SD mode
+    if (mode1bit)
+    {
+        host.flags = SDMMC_HOST_FLAG_1BIT; // use 1-line SD mode
         slot_config.width = 1;
     }
 
     esp_vfs_fat_sdmmc_mount_config_t mount_config = {
         .format_if_mount_failed = format_if_mount_failed,
         .max_files = maxOpenFiles,
-        .allocation_unit_size = 0
-    };
+        .allocation_unit_size = 0};
 
     esp_err_t ret = esp_vfs_fat_sdmmc_mount(mountpoint, &host, &slot_config, &mount_config, &_card);
-    if (ret != ESP_OK) {
-        if (ret == ESP_FAIL) {
+    if (ret != ESP_OK)
+    {
+        if (ret == ESP_FAIL)
+        {
             log_e("Failed to mount filesystem. If you want the card to be formatted, set format_if_mount_failed = true.");
-        } else if (ret == ESP_ERR_INVALID_STATE) {
+        }
+        else if (ret == ESP_ERR_INVALID_STATE)
+        {
             _impl->mountpoint(mountpoint);
             log_w("SD Already mounted");
             return true;
-        } else {
+        }
+        else
+        {
             log_e("Failed to initialize the card (0x%x). Make sure SD card lines have pull-up resistors in place.", ret);
         }
         _card = NULL;
@@ -146,7 +155,8 @@ bool SDMMCFS::begin(const char * mountpoint, bool mode1bit, bool format_if_mount
 
 void SDMMCFS::end()
 {
-    if(_card) {
+    if (_card)
+    {
         esp_vfs_fat_sdmmc_unmount();
         _impl->mountpoint(NULL);
         _card = NULL;
@@ -155,15 +165,22 @@ void SDMMCFS::end()
 
 sdcard_type_t SDMMCFS::cardType()
 {
-    if(!_card) {
+    if (!_card)
+    {
         return CARD_NONE;
     }
-    return (_card->ocr & SD_OCR_SDHC_CAP)?CARD_SDHC:CARD_SD;
+
+    if (_card->is_mmc)
+    {
+        return CARD_MMC;
+    }
+    return (_card->ocr & SD_OCR_SDHC_CAP) ? CARD_SDHC : CARD_SD;
 }
 
 uint64_t SDMMCFS::cardSize()
 {
-    if(!_card) {
+    if (!_card)
+    {
         return 0;
     }
     return (uint64_t)_card->csd.capacity * _card->csd.sector_size;
@@ -171,30 +188,32 @@ uint64_t SDMMCFS::cardSize()
 
 uint64_t SDMMCFS::totalBytes()
 {
-	FATFS* fsinfo;
-	DWORD fre_clust;
-	if(f_getfree("0:",&fre_clust,&fsinfo)!= 0) return 0;
-    uint64_t size = ((uint64_t)(fsinfo->csize))*(fsinfo->n_fatent - 2)
+    FATFS *fsinfo;
+    DWORD fre_clust;
+    if (f_getfree("0:", &fre_clust, &fsinfo) != 0)
+        return 0;
+    uint64_t size = ((uint64_t)(fsinfo->csize)) * (fsinfo->n_fatent - 2)
 #if _MAX_SS != 512
-        *(fsinfo->ssize);
+                    * (fsinfo->ssize);
 #else
-        *512;
+                    * 512;
 #endif
-	return size;
+    return size;
 }
 
 uint64_t SDMMCFS::usedBytes()
 {
-	FATFS* fsinfo;
-	DWORD fre_clust;
-	if(f_getfree("0:",&fre_clust,&fsinfo)!= 0) return 0;
-	uint64_t size = ((uint64_t)(fsinfo->csize))*((fsinfo->n_fatent - 2) - (fsinfo->free_clst))
+    FATFS *fsinfo;
+    DWORD fre_clust;
+    if (f_getfree("0:", &fre_clust, &fsinfo) != 0)
+        return 0;
+    uint64_t size = ((uint64_t)(fsinfo->csize)) * ((fsinfo->n_fatent - 2) - (fsinfo->free_clst))
 #if _MAX_SS != 512
-        *(fsinfo->ssize);
+                    * (fsinfo->ssize);
 #else
-        *512;
+                    * 512;
 #endif
-	return size;
+    return size;
 }
 
 SDMMCFS SD_MMC = SDMMCFS(FSImplPtr(new VFSImpl()));
