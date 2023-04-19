@@ -89,6 +89,7 @@ static void configure_pins(usb_hal_context_t *usb)
 
 esp_err_t tinyusb_driver_install(const tinyusb_config_t *config)
 {
+    log_i("arduino tinyusb...");
     usb_hal_context_t hal = {
         .use_external_phy = config->external_phy};
     usb_hal_init(&hal);

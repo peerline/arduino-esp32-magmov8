@@ -41,7 +41,7 @@ set(CORE_SRCS
   cores/esp32/esp32-hal-spi.c
   cores/esp32/esp32-hal-time.c
   cores/esp32/esp32-hal-timer.c
-  cores/esp32/esp32-hal-tinyusb.c
+  # cores/esp32/esp32-hal-tinyusb.c
   cores/esp32/esp32-hal-touch.c
   cores/esp32/esp32-hal-uart.c
   cores/esp32/esp32-hal-rmt.c
@@ -256,7 +256,7 @@ if(CONFIG_ESP_RMAKER_WORK_QUEUE_TASK_STACK)
     maybe_add_component(qrcode)
 endif()
 #if(IDF_TARGET MATCHES "esp32s2|esp32s3" AND (CONFIG_TINYUSB_ENABLED OR CONFIG_TINYUSB))
-    maybe_add_component(arduino_tinyusb)
+  #  maybe_add_component(arduino_tinyusb)
 #endif()
 if(NOT CONFIG_ARDUINO_SELECTIVE_COMPILATION OR CONFIG_ARDUINO_SELECTIVE_ArduinoOTA)
     maybe_add_component(esp_https_ota)

@@ -22,8 +22,8 @@
 #include "driver/sdmmc_types.h"
 #include "sd_defines.h"
 
-// If reading/writing to the SD card is unstable, 
-// you can define BOARD_MAX_SDMMC_FREQ with lower value (Ex. SDMMC_FREQ_DEFAULT) 
+// If reading/writing to the SD card is unstable,
+// you can define BOARD_MAX_SDMMC_FREQ with lower value (Ex. SDMMC_FREQ_DEFAULT)
 // in pins_arduino.h for your board variant.
 #ifndef BOARD_MAX_SDMMC_FREQ
 #define BOARD_MAX_SDMMC_FREQ SDMMC_FREQ_HIGHSPEED
@@ -32,31 +32,36 @@
 namespace fs
 {
 
-class SDMMCFS : public FS
-{
-protected:
-    sdmmc_card_t* _card;
+    class SDMMCFS : public FS
+    {
+    protected:
+        sdmmc_card_t *_card;
 
 #ifdef SOC_SDMMC_USE_GPIO_MATRIX
-    int8_t _pin_clk = -1;
-    int8_t _pin_cmd = -1;
-    int8_t _pin_d0 = -1;
-    int8_t _pin_d1 = -1;
-    int8_t _pin_d2 = -1;
-    int8_t _pin_d3 = -1;
+        int8_t _pin_clk = -1;
+        int8_t _pin_cmd = -1;
+        int8_t _pin_d0 = -1;
+        int8_t _pin_d1 = -1;
+        int8_t _pin_d2 = -1;
+        int8_t _pin_d3 = -1;
 #endif
 
-public:
-    SDMMCFS(FSImplPtr impl);
-    bool setPins(int clk, int cmd, int d0);
-    bool setPins(int clk, int cmd, int d0, int d1, int d2, int d3);
-    bool begin(const char * mountpoint="/sdcard", bool mode1bit=false, bool format_if_mount_failed=false, int sdmmc_frequency=BOARD_MAX_SDMMC_FREQ, uint8_t maxOpenFiles = 5);
-    void end();
-    sdcard_type_t cardType();
-    uint64_t cardSize();
-    uint64_t totalBytes();
-    uint64_t usedBytes();
-};
+    public:
+        SDMMCFS(FSImplPtr impl);
+        bool setPins(int clk, int cmd, int d0);
+        bool setPins(int clk, int cmd, int d0, int d1, int d2, int d3);
+        bool begin(const char *mountpoint = "/sdcard", bool mode1bit = false, bool format_if_mount_failed = false, int sdmmc_frequency = BOARD_MAX_SDMMC_FREQ, uint8_t maxOpenFiles = 5);
+        void end();
+        sdcard_type_t cardType();
+
+        // peerline
+        int cardSector();
+        int cardCapacity();
+
+        uint64_t cardSize();
+        uint64_t totalBytes();
+        uint64_t usedBytes();
+    };
 
 }
 

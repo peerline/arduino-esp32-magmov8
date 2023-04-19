@@ -177,6 +177,24 @@ sdcard_type_t SDMMCFS::cardType()
     return (_card->ocr & SD_OCR_SDHC_CAP) ? CARD_SDHC : CARD_SD;
 }
 
+int SDMMCFS::cardSector()
+{
+    if (!_card)
+    {
+        return 0;
+    }
+    return _card->csd.sector_size;
+}
+
+int SDMMCFS::cardCapacity()
+{
+    if (!_card)
+    {
+        return 0;
+    }
+    return _card->csd.capacity;
+}
+
 uint64_t SDMMCFS::cardSize()
 {
     if (!_card)
