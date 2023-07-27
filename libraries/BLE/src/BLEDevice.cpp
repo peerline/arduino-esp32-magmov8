@@ -90,6 +90,11 @@ void BLEDevice::deleteServer()
         delete m_pServer;
         m_pServer = nullptr;
     }
+
+    if (m_bleAdvertising) {
+        delete m_bleAdvertising;
+        m_bleAdvertising = nullptr;
+    }
 }
 
 /**
@@ -150,9 +155,9 @@ void BLEDevice::deleteServer()
     esp_ble_gattc_cb_param_t* param)
 {
 
-    log_d("gattClientEventHandler [esp_gatt_if: %d] ... %s",
-        gattc_if, BLEUtils::gattClientEventTypeToString(event).c_str());
-    BLEUtils::dumpGattClientEvent(event, gattc_if, param);
+    // log_d("gattClientEventHandler [esp_gatt_if: %d] ... %s",
+    //     gattc_if, BLEUtils::gattClientEventTypeToString(event).c_str());
+    // BLEUtils::dumpGattClientEvent(event, gattc_if, param);
 
     switch (event) {
     case ESP_GATTC_CONNECT_EVT: {
